@@ -1,0 +1,6 @@
+{
+    "recommendations": [
+        "ms-vscode.azure-account",
+        "ms-vscode.azurecli"
+    ]
+}
