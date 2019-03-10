@@ -1,0 +1,17 @@
+# log into Azure cli
+az login
+
+# create a resource group
+az group create --name aci-from-scratch-01 --location westus
+
+# create an ACI
+az container create --resource-group aci-from-scratch-01 --name aci-from-scratch-01-demo --image microsoft/aci-helloworld --dns-name-label aci-from-scratch-01-demo --ports 80
+
+# show status of ACI
+az container show --resource-group aci-from-scratch-01 --name aci-from-scratch-01-demo --query "{FQDN:ipAddress.fqdn,ProvisioningState:provisioningState}" --out table
+
+# get logs
+az container logs --resource-group aci-from-scratch-01 --name aci-from-scratch-01-demo
+
+# cleanup
+az group delete --name aci-from-scratch-01 --yes
