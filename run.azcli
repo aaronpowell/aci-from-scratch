@@ -1,0 +1,41 @@
+# login
+az login
+
+# create resource group
+az group create --name aci-from-scratch-02 --location westus
+
+# create a docker image
+docker build -t aci-from-scratch-02:v1 ./src
+
+# run the image
+docker run --rm -d --publish 8080:80 --name web aci-from-scratch-02:v1
+
+# kill the image
+docker stop web
+
+# create the container registry
+az acr create --resource-group aci-from-scratch-02 --name acifromscratch02 --sku Basic --admin-enabled true
+az acr login --name acifromscratch02
+
+# get registry tag
+az acr show --name acifromscratch02 --query loginServer --output table
+
+# push the image to acr
+docker tag aci-from-scratch-02:v1 acifromscratch02.azurecr.io/aci-from-scratch-02:v1
+docker push acifromscratch02.azurecr.io/aci-from-scratch-02:v1
+
+az acr repository list --name acifromscratch02 --output table
+az acr repository show-tags --name acifromscratch02 --repository aci-from-scratch-02 --output table
+
+# get credentials
+az acr show --name acifromscratch02 --query loginServer
+az acr credential show --name acifromscratch02 --query "passwords[0].value"
+
+# deploy container
+az container create --resource-group aci-from-scratch-02 --name aci-from-scratch-02 --image acifromscratch02.azurecr.io/aci-from-scratch-02:v1 --cpu 1 --memory 1 --registry-login-server acifromscratch02.azurecr.io --registry-username acifromscratch02 --registry-password <password> --dns-name-label aci-from-scratch-02 --ports 80
+az container show --resource-group aci-from-scratch-02 --name aci-from-scratch-02 --query instanceView.state
+az container show --resource-group aci-from-scratch-02 --name aci-from-scratch-02 --query ipAddress.fqdn
+
+# destroy everything
+az group delete --name aci-from-scratch-02 -y
+docker rmi acifromscratch02.azurecr.io/aci-from-scratch-02:v1 aci-from-scratch-02:v1
