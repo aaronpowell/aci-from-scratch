@@ -1,0 +1,102 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "containerGroupName": {
+            "type": "string",
+            "defaultValue": "aci-from-scratch-04",
+            "metadata": {
+                "description": "The name of the ACI Container Group"
+            }
+        },
+        "databasePassword": {
+            "type": "string",
+            "defaultValue": "1-Agj391AE91_ajfs",
+            "metadata": {
+                "description": "The password for the sa account on the SQL server"
+            }
+        },
+        "registryPassword": {
+            "type": "string",
+            "metadata": {
+                "description": "The password to access the container registry"
+            }
+        }
+    },
+    "variables": {
+        "webContainerName": "aci-from-scratch-04-web",
+        "webImageName": "acifromscratch04.azurecr.io/aci-from-scratch-04:v1",
+        "dbContainerName": "aci-from-scratch-04-sql",
+        "dbImageName": "mcr.microsoft.com/mssql/server:2017-latest"
+    },
+    "resources": [{
+        "name": "[parameters('containerGroupName')]",
+        "type": "Microsoft.ContainerInstance/containerGroups",
+        "apiVersion": "2018-04-01",
+        "location": "[resourceGroup().location]",
+        "properties": {
+            "imageRegistryCredentials": [{
+                "server": "acifromscratch04.azurecr.io",
+                "username": "acifromscratch04",
+                "password": "[parameters('registryPassword')]"
+            }],
+            "containers": [{
+                    "name": "[variables('webContainerName')]",
+                    "properties": {
+                        "image": "[variables('webImageName')]",
+                        "resources": {
+                            "requests": {
+                                "cpu": 1,
+                                "memoryInGB": 1.5
+                            }
+                        },
+                        "ports": [{
+                            "port": 80
+                        }],
+                        "environmentVariables": [{
+                            "name": "SQLCONNSTR_DefaultConnection",
+                            "value": "[concat('Server=tcp:localhost,1433;Database=aci-from-scratch;User ID=sa;Password=', parameters('databasePassword'), ';')]"
+                        }]
+                    }
+                },
+                {
+                    "name": "[variables('dbContainerName')]",
+                    "properties": {
+                        "image": "[variables('dbImageName')]",
+                        "resources": {
+                            "requests": {
+                                "cpu": 1,
+                                "memoryInGB": 2
+                            }
+                        },
+                        "ports": [{
+                            "port": 1433
+                        }],
+                        "environmentVariables": [{
+                            "name": "ACCEPT_EULA",
+                            "value": "Y"
+                        }, {
+                            "name": "SA_PASSWORD",
+                            "value": "[parameters('databasePassword')]"
+                        }]
+                    }
+                }
+            ],
+            "osType": "Linux",
+            "ipAddress": {
+                "type": "Public",
+                "ports": [{
+                    "protocol": "TCP",
+                    "port": 80
+                }],
+                "dnsNameLabel": "aci-from-scratch-04"
+            }
+        }
+    }],
+    "outputs": {
+        "containerIPv4Address": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('containerGroupName'))).ipAddress.ip]"
+        }
+    }
+}

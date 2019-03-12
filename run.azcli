@@ -1,0 +1,26 @@
+# login
+az login
+
+# create resource group
+az group create --name aci-from-scratch-04 --location westus
+
+# create a docker image
+docker build -t aci-from-scratch-04:v1 ./src
+
+# create the container registry
+az acr create --resource-group aci-from-scratch-04 --name acifromscratch04 --sku Basic --admin-enabled true
+az acr login --name acifromscratch04
+
+# push the image to acr
+docker tag aci-from-scratch-04:v1 acifromscratch04.azurecr.io/aci-from-scratch-04:v1
+docker push acifromscratch04.azurecr.io/aci-from-scratch-04:v1
+
+# deploy container
+az acr credential show --name acifromscratch04 --query "passwords[0].value"
+az group deployment create --resource-group aci-from-scratch-04 --template-file azuredeploy.json --parameters registryPassword=""
+az container show --resource-group aci-from-scratch-04 --name aci-from-scratch-04 --query instanceView.state
+az container show --resource-group aci-from-scratch-04 --name aci-from-scratch-04 --query ipAddress.fqdn
+
+# destroy everything
+az group delete --name aci-from-scratch-04 -y
+docker rmi acifromscratch04.azurecr.io/aci-from-scratch-04:v1 aci-from-scratch-04:v1
