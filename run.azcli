@@ -1,0 +1,36 @@
+# login
+az login
+
+# create resource group
+az group create --name aci-from-scratch-03 --location westus
+
+# create a docker image
+docker build -t aci-from-scratch-03:v1 ./src
+
+# create the container registry
+az acr create --resource-group aci-from-scratch-03 --name acifromscratch03 --sku Basic --admin-enabled true
+az acr login --name acifromscratch03
+
+# push the image to acr
+docker tag aci-from-scratch-03:v1 acifromscratch03.azurecr.io/aci-from-scratch-03:v1
+docker push acifromscratch03.azurecr.io/aci-from-scratch-03:v1
+
+# create a SQL server
+az sql server create --name aci-from-scratch-03-sql --resource-group aci-from-scratch-03 --location westus --admin-user aci --admin-password "A*&nmas1vah1)e24G"
+az sql db create --resource-group aci-from-scratch-03 --server aci-from-scratch-03-sql --name aci-from-scratch --service-objective S0 --zone-redundant false
+az sql db show-connection-string -s aci-from-scratch-03-sql -n aci-from-scratch -c ado.net
+
+# get credentials
+az acr credential show --name acifromscratch03 --query "passwords[0].value"
+
+# deploy container
+az container create --resource-group aci-from-scratch-03 --name aci-from-scratch-03 --image acifromscratch03.azurecr.io/aci-from-scratch-03:v1 --registry-login-server acifromscratch03.azurecr.io --registry-username acifromscratch03 --registry-password <password> --dns-name-label aci-from-scratch-03 --ports 80 --environment-variables 'SQLAZURECONNSTR_DefaultConnection'='Server=tcp:aci-from-scratch-03-sql.database.windows.net,1433;Database=aci-from-scratch;User ID=aci;Password=A*&nmas1vah1)e24G;Encrypt=true;Connection Timeout=30;'
+az container show --resource-group aci-from-scratch-03 --name aci-from-scratch-03 --query instanceView.state
+az container show --resource-group aci-from-scratch-03 --name aci-from-scratch-03 --query ipAddress.fqdn
+
+# open firewall for SQL
+az sql server firewall-rule create --resource-group aci-from-scratch-03 --server aci-from-scratch-03-sql --name AllowAllAzureIP --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
+
+# destroy everything
+az group delete --name aci-from-scratch-03 -y
+docker rmi acifromscratch03.azurecr.io/aci-from-scratch-03:v1 aci-from-scratch-03:v1
