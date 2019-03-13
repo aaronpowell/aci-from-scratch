@@ -10,3 +10,12 @@ The exercises have been optimised to run from [Visual Studio Code (VSCode)](http
 * You can either use the [Azure Cloud Shell](https://shell.azure.com/?wt.mc_id=acifromscratch-github-aapowell) or install the [Azure cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest&wt.mc_id=acifromscratch-github-aapowell) (or use it in a [Docker container](https://docs.microsoft.com/en-us/cli/azure/run-azure-cli-docker?view=azure-cli-latest&wt.mc_id=acifromscratch-github-aapowell) if you like!)
   * The `az --version` at time of creation is **2.0.59**
 
+## Exercise
+
+In this exercise we'll get familiar with the basics of ACI and the command line that we work with.
+
+The script for this exercise is [run.azcli](./run.azcli) and contains a number of commands that we'll execute using the `az` cli.
+
+You'll walk through creating a resource group for the exercise using `az group create` before diving into the `az container` commands to create and inspect the container.
+
+You can also log into the Azure Portal in the web browser and view the resources that have been deployed there.
